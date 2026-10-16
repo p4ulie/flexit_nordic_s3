@@ -6,6 +6,7 @@ Read-only BACnet/IP reader for a Flexit Nordic S3 REL (uses `flexit-bacnet`).
 mise install        # python 3.12 + uv, creates .venv
 mise run install    # deps into .venv
 mise run read       # table; `python flexit.py --json` for JSON
+mise run tui        # live view: Tab basic/full, r refresh, ↑↓ scroll, q quit
 ```
 
 Unit address comes from `FLEXIT_HOST` / `FLEXIT_DEVICE_ID` in `mise.toml`

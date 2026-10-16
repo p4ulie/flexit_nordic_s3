@@ -25,9 +25,12 @@ async def read(host: str, device_id: int) -> dict:
     return out
 
 
+HOST = os.environ.get("FLEXIT_HOST", "10.3.252.2")
+DEVICE_ID = int(os.environ.get("FLEXIT_DEVICE_ID", "2"))
+
+
 def main() -> None:
-    host = os.environ.get("FLEXIT_HOST", "10.3.252.2")
-    device_id = int(os.environ.get("FLEXIT_DEVICE_ID", "2"))
+    host, device_id = HOST, DEVICE_ID
     try:
         data = asyncio.run(read(host, device_id))
     except (TimeoutError, OSError) as e:
