@@ -13,9 +13,12 @@ FIELDS = sorted(
 )
 
 
-async def read(host: str, device_id: int) -> dict:
+async def read(host: str, device_id: int, action=None) -> dict:
+    """Snapshot all values; if given, `await action(unit)` first (library re-reads after each write)."""
     unit = FlexitBACnet(host, device_id)
     await asyncio.wait_for(unit.update(), timeout=15)
+    if action:
+        await asyncio.wait_for(action(unit), timeout=15)
     out = {}
     for name in FIELDS:
         try:
