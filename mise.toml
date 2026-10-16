@@ -6,6 +6,7 @@ uv = "latest"
 _.python.venv = { path = ".venv", create = true }
 FLEXIT_HOST = "10.3.252.2"
 FLEXIT_DEVICE_ID = "2"
+FLEXIT_REFRESH = "10"  # TUI poll interval, seconds
 
 [tasks.install]
 run = "uv pip install -r requirements.txt"

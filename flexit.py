@@ -2,10 +2,15 @@
 
 import asyncio
 import json
+import logging
 import os
 import sys
 
 from flexit_bacnet import FlexitBACnet
+
+# flexit_bacnet's UDP protocol sets a result on the already-cancelled future after a timeout;
+# asyncio logs that as a traceback (harmless, but it garbles the TUI)
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
 # ponytail: dumps every public property the library exposes; pick a subset if output gets noisy
 FIELDS = sorted(

@@ -2,11 +2,13 @@
 
 import asyncio
 import curses
+import os
+import threading
 import time
 
 from flexit import DEVICE_ID, HOST, read
 
-REFRESH_S = 60  # same cadence as the HA integration
+REFRESH_S = int(os.environ.get("FLEXIT_REFRESH", "10"))  # HA polls every 60 s; LAN reads take ~1 s
 MODES = {1: "Off", 2: "Away", 3: "Home", 4: "High", 5: "Cooker hood", 6: "Fireplace", 7: "Temporary high"}
 SCREENS = ["Overview", "All values", "Control"]
 
@@ -111,26 +113,31 @@ def ask(scr, prompt):
 def ui(scr):
     curses.curs_set(0)
     scr.timeout(1000)
-    data, msg, fetched = {}, "", 0.0
+    # poller thread owns periodic reads so keys never wait on the network; writes stay blocking (user awaits them)
+    st = {"data": {}, "err": "", "at": None}
+    wake = threading.Event()
+    msg = ""
     screen, top, sel = 0, 0, 0
 
-    def fetch(action=None, label="Reading…"):
-        nonlocal data, msg, fetched
-        scr.addnstr(0, 0, f" {label}".ljust(curses.COLS - 1), curses.COLS - 1, curses.A_REVERSE)
-        scr.refresh()
+    def fetch(action=None):
         try:
-            data = asyncio.run(read(HOST, DEVICE_ID, action))
-            msg = ""
+            st["data"], st["err"] = asyncio.run(read(HOST, DEVICE_ID, action)), ""
+            st["at"] = time.monotonic()  # age = since last good read, so stale data is visible
         except (TimeoutError, OSError) as e:
-            msg = f"No answer from {HOST}: {e!r}"
-        except Exception as e:  # write rejected by the unit / bad value
-            msg = f"Failed: {e}"
-        fetched = time.monotonic()
+            st["err"] = f"No answer from {HOST}: {e!r}"
+            if action:
+                raise
+
+    def poller():
+        while True:
+            fetch()
+            wake.wait(REFRESH_S)
+            wake.clear()
+
+    threading.Thread(target=poller, daemon=True).start()
 
     while True:
-        if time.monotonic() - fetched >= REFRESH_S:
-            fetch()
-
+        data = st["data"]
         rows, cols = scr.getmaxyx()
         lines = body(screen, data, sel) if data else []
         top = max(0, min(top, len(lines) - (rows - 4)))
@@ -140,11 +147,12 @@ def ui(scr):
             tab = f" {i + 1} {name} "
             scr.addnstr(0, x, tab, max(0, cols - x - 1), curses.A_REVERSE if i == screen else curses.A_NORMAL)
             x += len(tab) + 1
-        info = f"{HOST} · {int(time.monotonic() - fetched)}s ago"
+        age = "reading…" if st["at"] is None else f"{int(time.monotonic() - st['at'])}s ago"
+        info = f"{HOST} · every {REFRESH_S}s · {age}"
         if x + len(info) < cols:
             scr.addstr(0, cols - len(info) - 1, info, curses.A_DIM)
-        if msg:
-            scr.addnstr(1, 0, msg, cols - 1, curses.A_BOLD)
+        if st["err"] or msg:
+            scr.addnstr(1, 0, st["err"] or msg, cols - 1, curses.A_BOLD)
         for i, line in enumerate(lines[top : top + rows - 4]):
             scr.addnstr(i + 2, 1, line, cols - 2, curses.A_BOLD if screen == 2 and line.startswith(">") else 0)
         keys = "1-3/Tab screen · ↑↓ " + ("select · Enter apply" if screen == 2 else "scroll") + " · r refresh · q quit"
@@ -159,7 +167,7 @@ def ui(scr):
         elif ord("1") <= key < ord("1") + len(SCREENS):
             screen, top = key - ord("1"), 0
         elif key == ord("r"):
-            fetched = 0.0
+            wake.set()
         elif key in (curses.KEY_DOWN, ord("j")):
             if screen == 2:
                 sel = min(sel + 1, len(ACTIONS) - 1)
@@ -183,9 +191,13 @@ def ui(scr):
             if ask(scr, f" Set {what}? [y/N] ").lower() != "y":
                 msg = "Cancelled"
                 continue
-            fetch(lambda u: action(u, minutes), f"Setting {what}…")
-            if not msg:
-                msg = f"Done: {what} → mode now {MODES.get(data.get('operation_mode'), '?')}"
+            scr.addnstr(rows - 1, 0, f" Setting {what}…".ljust(cols - 1), cols - 1, curses.A_REVERSE)
+            scr.refresh()
+            try:
+                fetch(lambda u: action(u, minutes))
+                msg = f"Done: {what} → mode now {MODES.get(st['data'].get('operation_mode'), '?')}"
+            except Exception as e:  # timeout, or write rejected by the unit
+                msg = f"Failed: {what}: {e!r}"
 
 
 if __name__ == "__main__":
