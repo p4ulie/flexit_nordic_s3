@@ -21,7 +21,7 @@ Must run from the unit's LAN segment (UDP 47808).
 
 ```sh
 mise run exporter                                  # local
-docker build -t flexit-exporter . && docker run -p 9877:9877 flexit-exporter
+docker build -t flexit-exporter . && docker run -p 9877:9877 -e FLEXIT_HOST=10.3.252.2 -e FLEXIT_DEVICE_ID=2 flexit-exporter
 kubectl apply -f k8s/flexit-exporter.yaml          # set the image to your registry first
 ```
 

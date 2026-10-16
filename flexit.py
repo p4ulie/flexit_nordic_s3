@@ -33,8 +33,12 @@ async def read(host: str, device_id: int, action=None) -> dict:
     return out
 
 
-HOST = os.environ.get("FLEXIT_HOST", "10.3.252.2")
-DEVICE_ID = int(os.environ.get("FLEXIT_DEVICE_ID", "2"))
+# no defaults on purpose: unit address is deployment config (mise.toml, docker -e, k8s env)
+try:
+    HOST = os.environ["FLEXIT_HOST"]
+    DEVICE_ID = int(os.environ["FLEXIT_DEVICE_ID"])
+except (KeyError, ValueError) as e:
+    sys.exit(f"Set FLEXIT_HOST and FLEXIT_DEVICE_ID (BACnet settings in the Flexit GO app): {e!r}")
 
 
 def main() -> None:
