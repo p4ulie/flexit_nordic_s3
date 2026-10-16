@@ -10,7 +10,7 @@ mise run tui        # screens: 1 Overview, 2 All values, 3 Control (mode / boost
                     # refreshes every FLEXIT_REFRESH s (mise.toml, default 10) in the background
 ```
 
-Unit address comes from `FLEXIT_HOST` / `FLEXIT_DEVICE_ID` in `mise.toml`
+Config: `cp .env.example .env` and set `FLEXIT_HOST` / `FLEXIT_DEVICE_ID` — mise loads `.env` (git-ignored)
 (from Flexit GO → More → Installer → Communication → BACnet settings).
 Must run from the unit's LAN segment (UDP 47808).
 
@@ -21,7 +21,7 @@ Must run from the unit's LAN segment (UDP 47808).
 
 ```sh
 mise run exporter                                  # local
-docker build -t flexit-exporter . && docker run -p 9877:9877 -e FLEXIT_HOST=10.3.252.2 -e FLEXIT_DEVICE_ID=2 flexit-exporter
+docker build -t flexit-exporter . && docker run -p 9877:9877 --env-file .env flexit-exporter
 kubectl apply -f k8s/flexit-exporter.yaml          # set the image to your registry first
 ```
 

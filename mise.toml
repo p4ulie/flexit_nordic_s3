@@ -4,9 +4,7 @@ uv = "latest"
 
 [env]
 _.python.venv = { path = ".venv", create = true }
-FLEXIT_HOST = "10.3.252.2"
-FLEXIT_DEVICE_ID = "2"
-FLEXIT_REFRESH = "10"  # TUI poll interval, seconds
+_.file = { path = ".env", tools = true }  # unit address etc., git-ignored; see .env.example
 
 [tasks.install]
 run = "uv pip install -r requirements.txt"
