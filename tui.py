@@ -51,6 +51,33 @@ ACTIONS = [
 ]
 
 
+# (section, field-name substrings); first match wins, unmatched land in "Other"
+GROUPS = [
+    ("Device", ("model", "serial", "device_name")),
+    ("Filter", ("air_filter",)),
+    ("Fan setpoints", ("fan_setpoint",)),
+    ("Fans", ("fan",)),
+    ("Modes", ("mode", "comfort", "cooker", "fireplace", "rapid", "setpoint_away", "setpoint_home")),
+    ("Air", ("temperature", "humidity")),
+    ("Heat exchanger", ("heat_exchanger",)),
+    ("Heater", ("electric_heater",)),
+]
+
+
+def grouped(data):
+    w = max(map(len, data), default=0)
+    order = ["Device", "Modes", "Air", "Fans", "Fan setpoints", "Heat exchanger", "Heater", "Filter", "Other"]
+    sections = {name: [] for name in order}
+    for k, v in data.items():
+        name = next((n for n, keys in GROUPS if any(s in k for s in keys)), "Other")
+        sections[name].append(f"  {k:<{w}}  {v}")
+    out = []
+    for name, rows in sections.items():
+        if rows:
+            out += ([""] if out else []) + [name] + rows
+    return out
+
+
 def fmt(f, v):
     try:
         return f(v) if callable(f) else f.format(v)
@@ -62,8 +89,7 @@ def body(screen, data, sel):
     if screen == 0:
         return [f"{label:<18}{fmt(f, data.get(k))}" if k else "" for label, k, f in BASIC]
     if screen == 1:
-        w = max(map(len, data), default=0)
-        return [f"{k:<{w}}  {v}" for k, v in data.items()]
+        return grouped(data)
     cur = f"Current mode: {MODES.get(data.get('operation_mode'), '?')}"
     return [cur, ""] + [("> " if i == sel else "  ") + a[0] for i, a in enumerate(ACTIONS)]
 
