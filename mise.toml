@@ -16,3 +16,6 @@ run = "python flexit.py"
 
 [tasks.tui]
 run = "python tui.py"
+
+[tasks.exporter]
+run = "python exporter.py"

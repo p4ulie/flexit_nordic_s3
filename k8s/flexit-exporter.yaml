@@ -1,0 +1,44 @@
+# Unit must be reachable (UDP 47808) from the node network; pod traffic is SNATed, replies return via conntrack.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flexit-exporter
+  labels: {app: flexit-exporter}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: flexit-exporter}
+  template:
+    metadata:
+      labels: {app: flexit-exporter}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9877"
+    spec:
+      containers:
+        - name: exporter
+          image: flexit-exporter:latest  # push to your registry and change this
+          env:
+            - {name: FLEXIT_HOST, value: "10.3.252.2"}
+            - {name: FLEXIT_DEVICE_ID, value: "2"}
+          ports:
+            - {name: metrics, containerPort: 9877}
+          readinessProbe:
+            tcpSocket: {port: metrics}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 96Mi}
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flexit-exporter
+  labels: {app: flexit-exporter}
+spec:
+  selector: {app: flexit-exporter}
+  ports:
+    - {name: metrics, port: 9877, targetPort: metrics}
