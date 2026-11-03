@@ -11,19 +11,8 @@ This file lists every BACnet object the Flexit Nordic controller exposes. These 
 ## Addressing
 
 Every object is addressed as **`<object-type>,<instance>`**, for example `multi-state-value,42`. A read or write targets that object's `present-value` property (85).
-
-| Object type | Number | Value type when writing |
-|---|---:|---|
-| `analog-input` | 0 | read-only |
-| `analog-output` | 1 | read-only in practice (actuator signal) |
-| `analog-value` | 2 | REAL |
-| `binary-input` | 3 | read-only |
-| `binary-output` | 4 | read-only in practice |
-| `binary-value` | 5 | ENUMERATED (`0` inactive, `1` active) |
-| `multi-state-value` | 19 | UNSIGNED (states start at 1) |
-| `positive-integer-value` | 48 | UNSIGNED |
-
-Objects marked **priority 13** are written at priority 13 by `flexit-bacnet`, so use the same priority. In BACnet, a write at a higher priority (a lower number) overrides lower ones until it is relinquished. A write at a lower priority is ignored while a higher one is set. Objects without a priority use the default, 16.
+The [object type numbers and datatypes](BACNET.md#object-types) and [command priority](BACNET.md#command-priority) are explained in [BACNET.md](BACNET.md).
+Write objects marked **priority 13** at priority 13. Write the rest without a priority.
 
 ## Writable objects used for control
 

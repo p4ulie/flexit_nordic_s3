@@ -20,6 +20,8 @@ The unit is controlled over **BACnet/IP**: UDP port 47808 on the local network. 
 - **No HTTP API.** This means `curl` can't talk to the unit. Use the Python library below or a BACnet tool.
 - **Same LAN segment.** Replies come back over UDP and discovery uses broadcast, so run the scripts from the unit's subnet. In Kubernetes, the pod needs a route to the unit.
 
+How the protocol works (objects, command priority, packet bytes) is covered in [BACNET.md](BACNET.md).
+
 ### Finding the connection parameters
 
 Get both values from the **Flexit GO** app, the same app that connects the unit to Flexit's cloud. Look under
@@ -30,8 +32,8 @@ Get both values from the **Flexit GO** app, the same app that connects the unit 
 | `FLEXIT_HOST` | IP address | `192.0.2.10` |
 | `FLEXIT_DEVICE_ID` | Device ID (BACnet device instance) | `2` |
 
-The library can also find the IP address. It sends a BACnet Who-Is broadcast and binds UDP 47808 locally,
-so stop any other BACnet client first:
+The library can also find the IP address. It sends the same Siemens discovery broadcast the Flexit GO app uses (not Who-Is; see [BACNET.md](BACNET.md#discovery)).
+It binds UDP 47808 locally, so stop any other BACnet client first:
 
 ```sh
 python -c 'import asyncio, flexit_bacnet; print(asyncio.run(flexit_bacnet.discover()))'
@@ -42,7 +44,7 @@ Give the unit a DHCP reservation so the IP address doesn't change.
 
 ## Switching modes
 
-A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **priority 13**. The library re-reads all values after each write.
+A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **priority 13** (why that matters: [BACNET.md](BACNET.md#command-priority)). The library re-reads all values after each write.
 
 | Action | BACnet object | Value |
 |---|---|---|
