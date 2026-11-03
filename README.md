@@ -44,7 +44,7 @@ Give the unit a DHCP reservation so the IP address doesn't change.
 
 ## Switching modes
 
-A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **priority 13** (why that matters: [BACNET.md](BACNET.md#command-priority)). The library re-reads all values after each write.
+A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **priority 13** (why that matters: [BACNET.md](BACNET.md#command-priority)).
 
 | Action | BACnet object | Value |
 |---|---|---|
@@ -56,39 +56,36 @@ A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **prio
 
 All 653 BACnet objects are listed in [ENDPOINTS.md](ENDPOINTS.md).
 
-### Python
-
-```python
-import asyncio, os
-from flexit_bacnet import FlexitBACnet, VENTILATION_MODE_HIGH
-
-async def main():
-    unit = FlexitBACnet(os.environ["FLEXIT_HOST"], int(os.environ["FLEXIT_DEVICE_ID"]))
-    await unit.update()                          # must read before reading or writing values
-    if not unit.comfort_button:                  # the ventilation mode is ignored while the comfort button is off
-        await unit.activate_comfort_button()
-    await unit.set_ventilation_mode(VENTILATION_MODE_HIGH)   # 1 Stop, 2 Away, 3 Home, 4 High
-    # await unit.start_rapid_ventilation(30)     # boost for 30 min
-    # await unit.start_fireplace_ventilation(15) # fireplace for 15 min
-    print(unit.operation_mode)                   # 4 = High
-
-asyncio.run(main())
-```
-
 ### Command line
 
-`curl` can't speak BACnet. The closest command-line equivalent is `bacwp` from
-[bacnet-stack](https://github.com/bacnet-stack/bacnet-stack). This example is untested on this unit:
+`curl` can't speak BACnet. Use `bacwp` (write) and `bacrp` (read) from
+[bacnet-stack](https://github.com/bacnet-stack/bacnet-stack) instead. On Arch, install it with `yay -S bacnet-stack`.
+These examples are untested on this unit:
 
 ```sh
 # bacwp <device-id> <object-type> <instance> <property> <priority> <index> <tag> <value>
-# object types: 5 = binary-value, 19 = multi-state-value · property 85 = present-value · index -1 = none
-# tags: 9 = enumerated, 2 = unsigned
-bacwp 2 5 50 85 13 -1 9 1      # comfort button on
-bacwp 2 19 42 85 13 -1 2 4     # ventilation mode High
-bacrp 2 19 361 85              # read the operation mode
+# object types: 5 = binary-value, 19 = multi-state-value, 48 = positive-integer-value
+# property 85 = present-value · priority 0 = none · index -1 = none · tags: 2 = unsigned, 9 = enumerated
+
+# Home
+bacwp 2 5 50 85 13 -1 9 1          # comfort button on
+bacwp 2 19 42 85 13 -1 2 3         # ventilation mode 3 = Home
+
+# High
+bacwp 2 5 50 85 13 -1 9 1
+bacwp 2 19 42 85 13 -1 2 4         # ventilation mode 4 = High
+
+# Away
+bacwp 2 19 42 85 13 -1 2 2         # ventilation mode 2 = Away
+
+# High for 15 minutes
+bacwp 2 48 293 85 0 -1 2 15        # boost runtime = 15 min
+bacwp 2 19 357 85 0 -1 2 2         # trigger boost
+
+bacrp 2 19 361 85                  # check: 2 Away · 3 Home · 4 High · 7 Temporary high
 ```
 
+Replace the first `2` with your `FLEXIT_DEVICE_ID`.
 `bacwp` finds the device with a Who-Is broadcast, so it has to run on the unit's broadcast segment.
 
 ## Prometheus exporter
