@@ -52,7 +52,7 @@ A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **prio
 | Fireplace: runtime, then trigger | `positive-integer-value,270`, then `multi-state-value,360` | minutes (1–360), then `2` |
 | Read the current mode | `multi-state-value,361` (read-only) | `1` Off · `2` Away · `3` Home · `4` High · `5` Cooker hood · `6` Fireplace · `7` Temporary high |
 
-The full point list is in Flexit's [BACnet Nordic Basic sheet](https://www.flexit.no/globalassets/catalog/documents/bacnet-nordic-basic_2963.xlsx).
+All 653 BACnet objects are listed in [ENDPOINTS.md](ENDPOINTS.md).
 
 ### Python
 
