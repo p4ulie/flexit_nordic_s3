@@ -51,6 +51,7 @@ A mode switch is a BACnet **WriteProperty** of `present-value`, sent with **prio
 | Comfort button on (required before Home/High/Stop) | `binary-value,50` | `1` (`0` = off, which falls back to Away) |
 | Ventilation mode | `multi-state-value,42` | `1` Stop · `2` Away · `3` Home · `4` High |
 | Boost: runtime, then trigger | `positive-integer-value,293`, then `multi-state-value,357` | minutes (1–360), then `2` |
+| Stop a running boost (what the app's Stop button does) | `binary-value,15` | `NULL` at priority 13 (relinquish) |
 | Fireplace: runtime, then trigger | `positive-integer-value,270`, then `multi-state-value,360` | minutes (1–360), then `2` |
 | Read the current mode | `multi-state-value,361` (read-only) | `1` Off · `2` Away · `3` Home · `4` High · `5` Cooker hood · `6` Fireplace · `7` Temporary high |
 
@@ -82,8 +83,14 @@ bacwp 2 19 42 85 13 -1 2 2         # ventilation mode 2 = Away
 bacwp 2 48 293 85 0 -1 2 15        # boost runtime = 15 min
 bacwp 2 19 357 85 0 -1 2 2         # trigger boost
 
+# Stop the boost early
+bacwp 2 5 15 85 13 -1 0 0          # Forced ventilation: NULL @ priority 13 (tag 0 = NULL)
+
 bacrp 2 19 361 85                  # check: 2 Away · 3 Home · 4 High · 7 Temporary high
 ```
+
+While a boost runs, the unit itself holds High in slot 7 of the ventilation mode, so **Home and Away writes are stored but have no effect**.
+Stop the boost first. The unit then falls back to the last mode written at priority 13.
 
 Replace the first `2` with your `FLEXIT_DEVICE_ID`.
 `bacwp` finds the device with a Who-Is broadcast, so it has to run on the unit's broadcast segment.

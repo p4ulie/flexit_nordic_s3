@@ -33,12 +33,19 @@ Each of these is used by `flexit-bacnet`, the library behind the Home Assistant 
 |---|---:|---|---|
 | `positive-integer-value,293` | – | Rapid ventilation (boost) runtime | minutes (1–360) |
 | `multi-state-value,357` | – | Rapid ventilation trigger | write `2` to start |
+| `binary-value,15` | 13 | Forced ventilation (boost) | write `NULL` @13 to **stop** a running boost. This is what the Flexit GO Stop button does |
 | `analog-value,2031` | read-only | Rapid ventilation remaining | minutes |
 | `positive-integer-value,270` | – | Fireplace ventilation runtime | minutes (1–360) |
 | `multi-state-value,360` | – | Fireplace ventilation trigger | write `2` to start |
 | `analog-value,2038` | read-only | Fireplace ventilation remaining | minutes |
 | `binary-value,400` | read-only | Fireplace mode active | `0` / `1` |
 | `binary-value,402` | 13 | Cooker hood | `1` on · `0` off |
+
+These objects look like ways to stop a boost but **don't work**. They were tested on a real unit:
+
+- `binary-value,452` "Reset temporary ventilation operation": writes are rejected with *write-access-denied*.
+- `multi-state-value,319` "Temporary ventilation operation" (`1` None · `2` FanBoost · `3` Fire · `4` Cook): writes are accepted, but the controller restores the value within seconds.
+- `multi-state-value,42` ventilation mode: during a boost, the controller holds `4` (High) in **slot 7**, so Home/Away writes at 13 wait until the boost ends or is stopped.
 
 ### Temperature setpoints
 

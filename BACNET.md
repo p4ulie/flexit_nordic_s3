@@ -63,6 +63,9 @@ lowest-numbered (most important) slot that isn't empty. If all slots are empty, 
   If you write them at another priority, you either get overridden by slot 13, or your value sticks in a more important slot
   and silently overrides the app and the panel until you relinquish it.
 - Setpoints and runtimes aren't written with a priority, so they go to slot 16.
+- **The controller writes slots too.** During a boost it holds High in slot 7 of `multi-state-value,42`, which beats any mode written at 13.
+  The app's Stop button relinquishes `binary-value,15` at slot 13, and the controller then clears its own slot 7.
+  To see who holds what, read `priority-array` (87). This is how the Stop write was found: a snapshot of every object before and after pressing Stop in the app.
 
 ## Services used
 
@@ -129,6 +132,15 @@ The reply is a ComplexACK (`30 01 0e …`). It carries the same object id, then 
 81 0a 00 18  01 04  02 44 01 0f  0c 00 80 07 ca  19 55  3e 44 41 a8 00 00 3f
                                  analog-value,1994      REAL 21.0 (IEEE 754 big-endian)
 ```
+
+### Stop a boost (relinquish: NULL at priority 13)
+
+```
+81 0a 00 16  01 04  02 44 01 0f  0c 01 40 00 0f  19 55  3e 00 3f  49 0d
+                                 binary-value,15        NULL     priority 13
+```
+
+`flexit-bacnet` can't encode NULL. It only writes REAL, ENUMERATED and UNSIGNED.
 
 A successful write is answered by a **SimpleACK**: APDU `20 01 0f`.
 A rejected write returns an **Error** PDU (`50 …`) with an error class and code, e.g. *property / write-access-denied*.
