@@ -21,6 +21,7 @@ The unit is controlled over **BACnet/IP**: UDP port 47808 on the local network. 
 - **Same LAN segment.** Replies come back over UDP and discovery uses broadcast, so run the scripts from the unit's subnet. In Kubernetes, the pod needs a route to the unit.
 
 How the protocol works (objects, command priority, packet bytes) is covered in [BACNET.md](BACNET.md).
+TapHome reads the temperatures and the operation mode over the same protocol: [TAPHOME.md](TAPHOME.md).
 
 ### Finding the connection parameters
 
