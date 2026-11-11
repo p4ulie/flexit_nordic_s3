@@ -64,6 +64,15 @@ the scripts follow TapHome's documented functions (`SENDDATA`, `BYTECOLLECTION`,
        opMode := GETAT(b, 83);
    END
    ```
+   **Before TapHome 2026.1.39016** (no `UNPACKVALUE`: "unknown variable or contact"), decode the REALs by hand with
+   `GETAT`, `MOD` and `POWER` (IEEE 754: sign, 8-bit exponent, 23-bit mantissa; checked against the real reply, and
+   for negative and fractional values). Same check line, then per temperature (offset `o` = 19, 35, 51, 67):
+   ```taphome
+   VAR o := 19;
+   VAR b0 := GETAT(b, o); VAR b1 := GETAT(b, o + 1);
+   outdoorTemp := IF(b0 >= 128, -1, 1) * (1 + (MOD(b1, 128) * 65536 + GETAT(b, o + 2) * 256 + GETAT(b, o + 3)) / 8388608) * POWER(2, MOD(b0, 128) * 2 + IF(b1 >= 128, 1, 0) - 127);
+   ```
+   The byte checks are written as decimals (`48`, `14`, `68`, `33`), which every version accepts.
 4. **Devices.** Four *Temperature sensor* devices whose Read Value script is just the variable (`outdoorTemp`,
    `supplyTemp`, `extractTemp`, `exhaustTemp`), and one *Multi-value switch* named Operation mode, read-only, Read Value
    `opMode`, with states 1–7 named as in the table above.
