@@ -1,9 +1,12 @@
 import importlib
+import sys
 
 import pytest
 
 
 def test_import_without_env(monkeypatch):
+    # a cached module would make the import below prove nothing
+    monkeypatch.delitem(sys.modules, "flexit_nordic.flexit", raising=False)
     monkeypatch.delenv("FLEXIT_HOST", raising=False)
     monkeypatch.delenv("FLEXIT_DEVICE_ID", raising=False)
     importlib.import_module("flexit_nordic.flexit")
