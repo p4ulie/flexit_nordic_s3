@@ -98,13 +98,58 @@ Replace the first `2` with your `FLEXIT_DEVICE_ID`.
 
 ## Prometheus exporter
 
-`flexit_nordic/exporter.py` reads the unit on every scrape (via `flexit.read()`) and serves `:9877/metrics`:
-`flexit_up`, `flexit_info{model,serial_number,…}`, and one gauge `flexit_<field>` per numeric value (bools as 0/1).
+`flexit_nordic/exporter.py` polls the unit in a background thread every `FLEXIT_INTERVAL` seconds (default 30) and serves
+`:9877/metrics` (`FLEXIT_EXPORTER_PORT`). A scrape only formats the last result and never touches the network.
+
+| Metric | Meaning |
+|---|---|
+| `flexit_up` | 1 if the last read succeeded, else 0 |
+| `flexit_last_success_timestamp_seconds` | Unix time of the last successful read |
+| `flexit_read_duration_seconds` | Duration of the last read |
+| `flexit_read_errors_total` | Failed reads |
+| `flexit_info{device_name,model,serial_number}` | Unit identity, always 1 |
+| `flexit_<field>` | One gauge per numeric value (bools as 0/1) |
+
+While reads fail, the `flexit_<field>` gauges and `flexit_info` are not exported, so a stale value never looks fresh.
+`flexit_up 0` and the timestamp say why. Before the first read finishes, only `flexit_up 0` is served.
+`flexit_operation_mode` is numeric (1 Off, 2 Away, 3 Home, 4 High, 5 Cooker hood, 6 Fireplace, 7 Temporary high).
 
 ```sh
-mise run exporter                                  # local
-docker build -t flexit-exporter . && docker run -p 9877:9877 --env-file .env flexit-exporter
-kubectl apply -f k8s/flexit-exporter.yaml          # set the image to your registry first
+mise run exporter                  # local
+mise run image:build               # flexit-exporter:dev
+docker run -p 9877:9877 --env-file .env flexit-exporter:dev
 ```
 
-Layout: `flexit_nordic/flexit.py` = data access (shared), `tui.py` / `flexit_nordic/exporter.py` = consumers.
+## Layout
+
+- `flexit_nordic/flexit.py`: data access, shared. `python -m flexit_nordic.flexit` is the reader (`mise run read`).
+- `flexit_nordic/tui.py`: the terminal UI (`mise run tui`).
+- `flexit_nordic/exporter.py`: the exporter (`mise run exporter`).
+- `deploy/helm/flexit-exporter/`: the Helm chart.
+- `docs/`: protocol notes ([BACNET.md](docs/BACNET.md), [ENDPOINTS.md](docs/ENDPOINTS.md), [TAPHOME.md](docs/TAPHOME.md)).
+
+## Helm chart
+
+```sh
+helm install flexit deploy/helm/flexit-exporter --set flexit.host=192.0.2.10 --set flexit.deviceId=2
+```
+
+| Value | Default | Meaning |
+|---|---|---|
+| `image.repository` | `10.34.1.1:30095/flexit-exporter` | Image to run |
+| `image.tag` | `""` | Empty means the chart's `appVersion` |
+| `flexit.host`, `flexit.deviceId` | none | Required |
+| `flexit.interval` | `30` | Poll interval in seconds |
+| `resources` | 10m CPU, 32Mi request, 96Mi limit | Pod resources |
+| `serviceMonitor.enabled`, `.interval` | `false`, `30s` | Prometheus Operator scrape config |
+| `prometheusRule.enabled` | `false` | Alerts: unreachable, stale, filter change, cold supply air |
+| `dashboard.enabled`, `.labels`, `.annotations` | `false` | Grafana dashboard ConfigMap for the sidecar |
+
+The chart installs no CRDs. The ServiceMonitor and PrometheusRule need prometheus-operator, the dashboard needs the Grafana sidecar.
+The pod needs a route to the unit (see [Connecting](#connecting)).
+
+## Release
+
+1. Bump `version` and `appVersion` in `deploy/helm/flexit-exporter/Chart.yaml` (same value), commit, tag `v<version>`, push.
+2. `mise run image:push` builds and pushes `${REGISTRY:-10.34.1.1:30095}/flexit-exporter:<version>`, with the version read from `Chart.yaml`.
+3. Point the Argo CD Application at the tag.
