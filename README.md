@@ -126,13 +126,13 @@ docker run -p 9877:9877 --env-file .env flexit-exporter:dev
 - `flexit_nordic/flexit.py`: data access, shared. `python -m flexit_nordic.flexit` is the reader (`mise run read`).
 - `flexit_nordic/tui.py`: the terminal UI (`mise run tui`).
 - `flexit_nordic/exporter.py`: the exporter (`mise run exporter`).
-- `deploy/helm/flexit-exporter/`: the Helm chart.
+- `helm/flexit-exporter/`: the Helm chart.
 - `docs/`: protocol notes ([BACNET.md](docs/BACNET.md), [ENDPOINTS.md](docs/ENDPOINTS.md), [TAPHOME.md](docs/TAPHOME.md)).
 
 ## Helm chart
 
 ```sh
-helm install flexit deploy/helm/flexit-exporter --set flexit.host=192.0.2.10 --set flexit.deviceId=2
+helm install flexit helm/flexit-exporter --set flexit.host=192.0.2.10 --set flexit.deviceId=2
 ```
 
 | Value | Default | Meaning |
@@ -151,6 +151,6 @@ The pod needs a route to the unit (see [Connecting](#connecting)).
 
 ## Release
 
-1. Bump `version` and `appVersion` in `deploy/helm/flexit-exporter/Chart.yaml` (same value), commit, tag `v<version>`, push.
+1. Bump `version` and `appVersion` in `helm/flexit-exporter/Chart.yaml` (same value), commit, tag `v<version>`, push.
 2. `mise run image:push` builds and pushes `${REGISTRY:-10.34.1.1:30095}/flexit-exporter:<version>`, with the version read from `Chart.yaml`.
 3. Point the Argo CD Application at the tag.

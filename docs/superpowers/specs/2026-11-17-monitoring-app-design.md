@@ -53,7 +53,7 @@ flexit_nordic/
   tui.py           # unchanged behaviour
   exporter.py      # the monitoring app
 tests/             # pytest, no unit needed (fake FlexitBACnet)
-deploy/helm/flexit-exporter/
+helm/flexit-exporter/
   Chart.yaml       # version == appVersion == the release version
   values.yaml
   templates/       # deployment, service, servicemonitor, prometheusrule, dashboard configmap
@@ -102,7 +102,7 @@ Move that into a `config()` function the three entry points call, so the package
 `Chart.yaml` so there is one place to bump. The workstation's Docker must allow the HTTP registry (it already does
 for the eve images).
 
-## Helm chart `deploy/helm/flexit-exporter`
+## Helm chart `helm/flexit-exporter`
 
 - `values.yaml`: `image.repository` (`10.34.1.1:30095/flexit-exporter`), `image.tag` (default: `appVersion`),
   `flexit.host` (required, chart fails to render without it), `flexit.deviceId` (required), `flexit.interval`,
@@ -139,7 +139,7 @@ for the eve images).
 ## homenet_2.0 side (separate commit in that repo)
 
 - `kubernetes/apps/flexit-exporter/application.yaml`: source `https://github.com/p4ulie/flexit_nordic_s3.git`,
-  `path: deploy/helm/flexit-exporter`, `targetRevision: v0.1.0`, values from `kubernetes/apps/flexit-exporter/values.yaml`
+  `path: helm/flexit-exporter`, `targetRevision: v0.1.0`, values from `kubernetes/apps/flexit-exporter/values.yaml`
   via `$values`, namespace `flexit` (created by ArgoCD), Pod Security `restricted`. Sync wave after
   kube-prometheus-stack and grafana, following the existing app waves.
 - `values.yaml`: `flexit.host` / `flexit.deviceId` from `inventory/site.yaml` (`flexit-go`, `10.3.252.2`; device ID

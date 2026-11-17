@@ -4,7 +4,7 @@ import subprocess
 
 import yaml
 
-CHART = "deploy/helm/flexit-exporter"
+CHART = "helm/flexit-exporter"
 REQUIRED = ["--set", "flexit.host=10.3.252.2", "--set", "flexit.deviceId=2"]
 TOGGLES = [
     "--set", "serviceMonitor.enabled=true",

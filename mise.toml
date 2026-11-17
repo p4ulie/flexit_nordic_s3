@@ -28,7 +28,7 @@ run = "docker build -t flexit-exporter:dev ."
 [tasks."image:push"]
 run = '''
 registry=${REGISTRY:-10.34.1.1:30095}
-v=$(sed -n 's/^version: *//p' deploy/helm/flexit-exporter/Chart.yaml | tr -d '"')
-[ -n "$v" ] || { echo "no version: in deploy/helm/flexit-exporter/Chart.yaml" >&2; exit 1; }
+v=$(sed -n 's/^version: *//p' helm/flexit-exporter/Chart.yaml | tr -d '"')
+[ -n "$v" ] || { echo "no version: in helm/flexit-exporter/Chart.yaml" >&2; exit 1; }
 docker build -t "$registry/flexit-exporter:$v" . && docker push "$registry/flexit-exporter:$v"
 '''
