@@ -7,13 +7,16 @@ _.python.venv = { path = ".venv", create = true }
 _.file = { path = ".env", tools = true }  # unit address etc., git-ignored; see .env.example
 
 [tasks.install]
-run = "uv pip install -r requirements.txt"
+run = "uv pip install -r requirements.txt -r requirements-dev.txt"
+
+[tasks.test]
+run = "uv run --with-requirements requirements.txt --with-requirements requirements-dev.txt python -m pytest -q tests/"
 
 [tasks.read]
-run = "python flexit.py"
+run = "python -m flexit_nordic.flexit"
 
 [tasks.tui]
-run = "python tui.py"
+run = "python -m flexit_nordic.tui"
 
 [tasks.exporter]
-run = "python exporter.py"
+run = "python -m flexit_nordic.exporter"

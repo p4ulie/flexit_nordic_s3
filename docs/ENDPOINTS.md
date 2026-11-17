@@ -1,6 +1,6 @@
 # Flexit Nordic BACnet objects
 
-This file lists every BACnet object the Flexit Nordic controller exposes. These objects are the unit's "endpoints". See [README.md](README.md) for how to connect.
+This file lists every BACnet object the Flexit Nordic controller exposes. These objects are the unit's "endpoints". See [README.md](../README.md) for how to connect.
 
 > **Source.** Flexit's official point list (`bacnet-nordic-basic_2963.xlsx`) has been removed from flexit.no: it returns 404 on .no, .se and .com, and the Wayback Machine never saved a copy.
 > The table below is generated from [`bac0_points_dump.txt`](https://github.com/piotrbulinski/flexit_bacnet/blob/main/bac0_points_dump.txt), a dump of a real Nordic unit in the

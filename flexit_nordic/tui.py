@@ -6,7 +6,7 @@ import os
 import threading
 import time
 
-from flexit import DEVICE_ID, HOST, read
+from .flexit import config, read
 
 REFRESH_S = int(os.environ.get("FLEXIT_REFRESH", "10"))  # HA polls every 60 s; LAN reads take ~1 s
 MODES = {1: "Off", 2: "Away", 3: "Home", 4: "High", 5: "Cooker hood", 6: "Fireplace", 7: "Temporary high"}
@@ -110,7 +110,7 @@ def ask(scr, prompt):
         scr.timeout(1000)
 
 
-def ui(scr):
+def ui(scr, host, device_id):
     curses.curs_set(0)
     scr.timeout(1000)
     # poller thread owns periodic reads so keys never wait on the network; writes stay blocking (user awaits them)
@@ -121,10 +121,10 @@ def ui(scr):
 
     def fetch(action=None):
         try:
-            st["data"], st["err"] = asyncio.run(read(HOST, DEVICE_ID, action)), ""
+            st["data"], st["err"] = asyncio.run(read(host, device_id, action)), ""
             st["at"] = time.monotonic()  # age = since last good read, so stale data is visible
         except (TimeoutError, OSError) as e:
-            st["err"] = f"No answer from {HOST}: {e!r}"
+            st["err"] = f"No answer from {host}: {e!r}"
             if action:
                 raise
 
@@ -148,7 +148,7 @@ def ui(scr):
             scr.addnstr(0, x, tab, max(0, cols - x - 1), curses.A_REVERSE if i == screen else curses.A_NORMAL)
             x += len(tab) + 1
         age = "reading…" if st["at"] is None else f"{int(time.monotonic() - st['at'])}s ago"
-        info = f"{HOST} · every {REFRESH_S}s · {age}"
+        info = f"{host} · every {REFRESH_S}s · {age}"
         if x + len(info) < cols:
             scr.addstr(0, cols - len(info) - 1, info, curses.A_DIM)
         if st["err"] or msg:
@@ -201,4 +201,4 @@ def ui(scr):
 
 
 if __name__ == "__main__":
-    curses.wrapper(ui)
+    curses.wrapper(ui, *config())  # config() before curses so its exit message is readable

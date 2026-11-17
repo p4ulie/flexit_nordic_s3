@@ -33,16 +33,17 @@ async def read(host: str, device_id: int, action=None) -> dict:
     return out
 
 
-# no defaults on purpose: unit address is deployment config (mise.toml, docker -e, k8s env)
-try:
-    HOST = os.environ["FLEXIT_HOST"]
-    DEVICE_ID = int(os.environ["FLEXIT_DEVICE_ID"])
-except (KeyError, ValueError) as e:
-    sys.exit(f"Set FLEXIT_HOST and FLEXIT_DEVICE_ID (BACnet settings in the Flexit GO app): {e!r}")
+def config() -> tuple[str, int]:
+    """Unit address from the environment, read lazily so importing this module needs no config."""
+    # no defaults on purpose: unit address is deployment config (mise.toml, docker -e, k8s env)
+    try:
+        return os.environ["FLEXIT_HOST"], int(os.environ["FLEXIT_DEVICE_ID"])
+    except (KeyError, ValueError) as e:
+        sys.exit(f"Set FLEXIT_HOST and FLEXIT_DEVICE_ID (BACnet settings in the Flexit GO app): {e!r}")
 
 
 def main() -> None:
-    host, device_id = HOST, DEVICE_ID
+    host, device_id = config()
     try:
         data = asyncio.run(read(host, device_id))
     except (TimeoutError, OSError) as e:

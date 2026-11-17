@@ -1,7 +1,7 @@
 # BACnet on the Flexit Nordic
 
 This document explains the protocol the unit speaks: just enough BACnet to read [ENDPOINTS.md](ENDPOINTS.md), debug with Wireshark, or write a client without `flexit-bacnet`.
-For setup and usage, see [README.md](README.md).
+For setup and usage, see [README.md](../README.md).
 
 The Nordic's controller is a Siemens unit; its BACnet vendor ID is 7. It speaks standard **BACnet/IP**, defined in ASHRAE 135, Annex J.
 
@@ -16,7 +16,7 @@ The Nordic's controller is a Siemens unit; its BACnet vendor ID is 7. It speaks 
 | Discovery | broadcast to `255.255.255.255:47808` (see [Discovery](#discovery)) |
 
 UDP is connectionless, so the reply has to be able to reach you. Run clients on the unit's subnet, or make sure no NAT or firewall
-drops the reply. `flexit-bacnet` waits 1 s for each reply. `flexit.py` gives the whole read 15 s.
+drops the reply. `flexit-bacnet` waits 1 s for each reply. `flexit_nordic/flexit.py` gives the whole read 15 s.
 
 ## Concepts
 
@@ -155,7 +155,7 @@ service **515** ("discover"), and its payload contains the string `?Devices=All`
 `flexit_bacnet.discover()` replays a captured copy of that request. To use it:
 
 - Bind UDP 47808 locally. Only one process can hold the port, so stop other BACnet clients first.
-- You get back IP addresses only. Read the device instance from Flexit GO (see [README.md](README.md#finding-the-connection-parameters)).
+- You get back IP addresses only. Read the device instance from Flexit GO (see [README.md](../README.md#finding-the-connection-parameters)).
 
 ## Tools
 

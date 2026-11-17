@@ -7,7 +7,7 @@ import time
 from prometheus_client import start_http_server
 from prometheus_client.core import REGISTRY, GaugeMetricFamily, InfoMetricFamily
 
-from flexit import DEVICE_ID, HOST, read
+from .flexit import config, read
 
 PORT = int(os.environ.get("FLEXIT_EXPORTER_PORT", "9877"))
 INFO = ("device_name", "model", "serial_number")
@@ -16,10 +16,11 @@ INFO = ("device_name", "model", "serial_number")
 class FlexitCollector:
     # ponytail: one BACnet read per scrape (~1 s); cache if several Prometheis scrape it
     def collect(self):
+        host, device_id = config()
         up = GaugeMetricFamily("flexit_up", "1 if the last BACnet read succeeded")
         start = time.monotonic()
         try:
-            data = asyncio.run(read(HOST, DEVICE_ID))
+            data = asyncio.run(read(host, device_id))
         except Exception:  # timeout, unreachable, decode error: report down, keep serving
             up.add_metric([], 0)
             yield up
@@ -35,8 +36,9 @@ class FlexitCollector:
 
 
 if __name__ == "__main__":
+    host, device_id = config()  # fail fast on missing config before serving
     REGISTRY.register(FlexitCollector())
     start_http_server(PORT)
-    print(f"flexit exporter on :{PORT}/metrics → {HOST} device {DEVICE_ID}", flush=True)
+    print(f"flexit exporter on :{PORT}/metrics → {host} device {device_id}", flush=True)
     while True:
         time.sleep(3600)
