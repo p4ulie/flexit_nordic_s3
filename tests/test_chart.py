@@ -32,13 +32,16 @@ def test_defaults_render_only_workload():
     docs = render(*REQUIRED)
     assert set(docs) == {"Deployment", "Service"}
     pod = docs["Deployment"]["spec"]["template"]["spec"]
+    # a Service named flexit-exporter injects FLEXIT_EXPORTER_PORT=tcp://..., which the exporter reads as its port
+    assert pod["enableServiceLinks"] is False
     assert pod["securityContext"] == {
         "runAsNonRoot": True,
         "runAsUser": 65534,
         "seccompProfile": {"type": "RuntimeDefault"},
     }
     c = pod["containers"][0]
-    assert c["image"] == "10.34.1.1:30095/flexit-exporter:0.1.0"
+    app_version = yaml.safe_load(open(f"{CHART}/Chart.yaml"))["appVersion"]
+    assert c["image"] == f"10.34.1.1:30095/flexit-exporter:{app_version}"
     assert {e["name"] for e in c["env"]} == {"FLEXIT_HOST", "FLEXIT_DEVICE_ID", "FLEXIT_INTERVAL"}
     assert c["securityContext"] == {
         "allowPrivilegeEscalation": False,
