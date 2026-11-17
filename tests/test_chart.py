@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 
 import yaml
@@ -70,3 +71,23 @@ def test_all_toggles():
     assert cm["metadata"]["labels"]["grafana_dashboard"] == "1"
     assert cm["metadata"]["annotations"]["grafana_folder"] == "Home"
     assert json.loads(cm["data"]["flexit.json"])["uid"] == "flexit"
+
+
+def test_dashboard_metrics_exist():
+    from flexit_nordic.flexit import FIELDS
+
+    known = {
+        "flexit_up", "flexit_last_success_timestamp_seconds", "flexit_read_duration_seconds",
+        "flexit_read_errors_total", "flexit_info",
+    } | {f"flexit_{f}" for f in FIELDS}
+    with open(f"{CHART}/dashboards/flexit.json") as f:
+        dash = json.load(f)
+    assert dash["uid"] == "flexit" and dash["editable"] is False
+    panels = [p for p in dash["panels"] if p["type"] != "row"]
+    assert len(panels) >= 15
+    for p in panels:
+        assert p["datasource"] == {"type": "prometheus", "uid": "prometheus"}
+        for t in p["targets"]:
+            assert t["datasource"]["uid"] == "prometheus"
+            used = set(re.findall(r"flexit_[a-z_]+", t["expr"]))
+            assert used and used <= known, used - known
