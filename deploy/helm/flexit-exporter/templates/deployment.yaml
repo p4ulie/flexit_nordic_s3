@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "flexit-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "flexit-exporter.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "flexit-exporter.labels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: exporter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          env:
+            - name: FLEXIT_HOST
+              value: {{ required "flexit.host is required" .Values.flexit.host | quote }}
+            - name: FLEXIT_DEVICE_ID
+              value: {{ required "flexit.deviceId is required" .Values.flexit.deviceId | quote }}
+            - name: FLEXIT_INTERVAL
+              value: {{ .Values.flexit.interval | quote }}
+          ports:
+            - name: metrics
+              containerPort: 9877
+          readinessProbe:
+            tcpSocket:
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

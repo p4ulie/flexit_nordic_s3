@@ -1,0 +1,72 @@
+import json
+import subprocess
+
+import yaml
+
+CHART = "deploy/helm/flexit-exporter"
+REQUIRED = ["--set", "flexit.host=10.3.252.2", "--set", "flexit.deviceId=2"]
+TOGGLES = [
+    "--set", "serviceMonitor.enabled=true",
+    "--set", "prometheusRule.enabled=true",
+    "--set", "dashboard.enabled=true",
+]
+
+
+def template(*args):
+    return subprocess.run(["helm", "template", "t", CHART, *args], capture_output=True, text=True)
+
+
+def render(*args):
+    out = template(*args)
+    assert out.returncode == 0, out.stderr
+    return {d["kind"]: d for d in yaml.safe_load_all(out.stdout) if d}
+
+
+def test_requires_host():
+    assert template("--set", "flexit.deviceId=2").returncode != 0
+    assert template("--set", "flexit.host=x").returncode != 0
+
+
+def test_defaults_render_only_workload():
+    docs = render(*REQUIRED)
+    assert set(docs) == {"Deployment", "Service"}
+    pod = docs["Deployment"]["spec"]["template"]["spec"]
+    assert pod["securityContext"] == {
+        "runAsNonRoot": True,
+        "runAsUser": 65534,
+        "seccompProfile": {"type": "RuntimeDefault"},
+    }
+    c = pod["containers"][0]
+    assert c["image"] == "10.34.1.1:30095/flexit-exporter:0.1.0"
+    assert {e["name"] for e in c["env"]} == {"FLEXIT_HOST", "FLEXIT_DEVICE_ID", "FLEXIT_INTERVAL"}
+    assert c["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "readOnlyRootFilesystem": True,
+        "capabilities": {"drop": ["ALL"]},
+    }
+    assert c["readinessProbe"]["tcpSocket"]["port"] == "metrics"
+    assert c["livenessProbe"]["httpGet"] == {"path": "/metrics", "port": "metrics"}
+    assert docs["Service"]["spec"]["ports"][0]["name"] == "metrics"
+    assert docs["Service"]["spec"]["ports"][0]["port"] == 9877
+
+
+def test_all_toggles():
+    docs = render(*REQUIRED, *TOGGLES)
+    assert set(docs) == {"Deployment", "Service", "ServiceMonitor", "PrometheusRule", "ConfigMap"}
+
+    ep = docs["ServiceMonitor"]["spec"]["endpoints"][0]
+    assert (ep["port"], ep["path"], ep["interval"]) == ("metrics", "/metrics", "30s")
+
+    rules = {r["alert"]: r for g in docs["PrometheusRule"]["spec"]["groups"] for r in g["rules"]}
+    assert {n: (r["expr"], r["for"]) for n, r in rules.items()} == {
+        "FlexitUnreachable": ("flexit_up == 0", "15m"),
+        "FlexitStale": ("time() - flexit_last_success_timestamp_seconds > 600", "5m"),
+        "FlexitFilterChange": ("flexit_air_filter_polluted == 1", "1h"),
+        "FlexitSupplyAirCold": ("flexit_supply_air_temperature < 15", "30m"),
+    }
+    assert all(r["labels"]["severity"] == "warning" for r in rules.values())
+
+    cm = docs["ConfigMap"]
+    assert cm["metadata"]["labels"]["grafana_dashboard"] == "1"
+    assert cm["metadata"]["annotations"]["grafana_folder"] == "Home"
+    assert json.loads(cm["data"]["flexit.json"])["uid"] == "flexit"

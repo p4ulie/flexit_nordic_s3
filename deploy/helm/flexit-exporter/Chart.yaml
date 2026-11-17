@@ -1,0 +1,5 @@
+apiVersion: v2
+name: flexit-exporter
+description: Prometheus exporter for a Flexit Nordic S3 over BACnet
+version: 0.1.0
+appVersion: "0.1.0"

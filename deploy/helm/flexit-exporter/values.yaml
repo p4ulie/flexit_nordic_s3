@@ -1,0 +1,30 @@
+image:
+  repository: 10.34.1.1:30095/flexit-exporter
+  tag: ""  # empty means the chart's appVersion
+
+flexit:
+  host: ""      # required
+  deviceId: ""  # required
+  interval: 30
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 96Mi
+
+# The chart installs no CRDs; these need prometheus-operator and the Grafana sidecar in the cluster.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
+prometheusRule:
+  enabled: false
+
+dashboard:
+  enabled: false
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: Home

@@ -10,7 +10,7 @@ _.file = { path = ".env", tools = true }  # unit address etc., git-ignored; see 
 run = "uv pip install -r requirements.txt -r requirements-dev.txt"
 
 [tasks.test]
-run = "uv run --with-requirements requirements.txt --with-requirements requirements-dev.txt python -m pytest -q tests/"
+run = "uv run --with-requirements requirements.txt --with-requirements requirements-dev.txt --with pyyaml python -m pytest -q tests/"
 
 [tasks.read]
 run = "python -m flexit_nordic.flexit"
