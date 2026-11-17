@@ -111,7 +111,8 @@ Replace the first `2` with your `FLEXIT_DEVICE_ID`.
 | `flexit_<field>` | One gauge per numeric value (bools as 0/1) |
 
 While reads fail, the `flexit_<field>` gauges and `flexit_info` are not exported, so a stale value never looks fresh.
-`flexit_up 0` and the timestamp say why. Before the first read finishes, only `flexit_up 0` is served.
+`flexit_up 0` and the timestamp say why. Before the first read finishes, only `flexit_up 0` and `flexit_read_errors_total 0` are served;
+`flexit_last_success_timestamp_seconds` appears after the first successful read and `flexit_read_duration_seconds` after the first finished read.
 `flexit_operation_mode` is numeric (1 Off, 2 Away, 3 Home, 4 High, 5 Cooker hood, 6 Fireplace, 7 Temporary high).
 
 ```sh

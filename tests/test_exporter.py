@@ -50,6 +50,14 @@ def test_good_read():
     assert "flexit_read_duration_seconds " in out
 
 
+def test_good_read_without_identity_fields():
+    state = State()
+    poll_once(state, "h", 2, reader=ok({"supply_air_temperature": 22.5}))
+    out = render(state)
+    assert "flexit_up 1.0" in out
+    assert "flexit_supply_air_temperature 22.5" in out
+
+
 def test_failed_read_after_success(caplog):
     state = State()
     poll_once(state, "h", 2, reader=ok(GOOD))

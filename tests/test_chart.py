@@ -73,6 +73,18 @@ def test_all_toggles():
     assert json.loads(cm["data"]["flexit.json"])["uid"] == "flexit"
 
 
+def test_dashboard_with_empty_labels_and_annotations():
+    # Helm merges a {} over the defaults, so only null really empties the maps; both must still parse.
+    docs = render(*REQUIRED, "--set", "dashboard.enabled=true",
+                  "--set-json", "dashboard.labels={}", "--set-json", "dashboard.annotations={}")
+    assert docs["ConfigMap"]["metadata"]["labels"]["grafana_dashboard"] == "1"
+    docs = render(*REQUIRED, "--set", "dashboard.enabled=true",
+                  "--set-json", "dashboard.labels=null", "--set-json", "dashboard.annotations=null")
+    meta = docs["ConfigMap"]["metadata"]
+    assert "grafana_dashboard" not in meta["labels"]
+    assert "annotations" not in meta
+
+
 def test_dashboard_metrics_exist():
     from flexit_nordic.flexit import FIELDS
 

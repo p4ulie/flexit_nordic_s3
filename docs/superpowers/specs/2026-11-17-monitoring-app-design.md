@@ -90,7 +90,9 @@ Move that into a `config()` function the three entry points call, so the package
   - `operation_mode` stays numeric (1 Off, 2 Away, 3 Home, 4 High, 5 Cooker hood, 6 Fireplace, 7 Temporary high —
     the TUI's `MODES`); the dashboard maps it to names.
 - Logs one line per failed read (exception type and message), not per success.
-- Before the first read finishes, `/metrics` serves `flexit_up 0` only.
+- Before the first read finishes, `/metrics` serves `flexit_up 0` and `flexit_read_errors_total 0`;
+  `flexit_last_success_timestamp_seconds` appears after the first successful read and `flexit_read_duration_seconds`
+  after the first finished read.
 
 ## Image
 

@@ -47,17 +47,19 @@ class FlexitCollector:
 
     def collect(self):
         s = self.state  # ponytail: no lock; a scrape racing a poll can mix two fields, harmless for gauges
-        yield GaugeMetricFamily("flexit_up", "1 if the last BACnet read succeeded", value=float(s.ok))
+        # One snapshot of the fields the poller may flip mid-scrape, so up and the value gauges never disagree.
+        ok, data = s.ok, s.data
+        yield GaugeMetricFamily("flexit_up", "1 if the last BACnet read succeeded", value=float(ok))
         if s.last_success is not None:
             yield GaugeMetricFamily("flexit_last_success_timestamp_seconds", "Unix time of the last successful read", value=s.last_success)
         if s.duration is not None:
             yield GaugeMetricFamily("flexit_read_duration_seconds", "Duration of the last read", value=s.duration)
         yield CounterMetricFamily("flexit_read_errors", "Failed BACnet reads", value=s.errors)
-        data = s.data
-        if data is None or not s.ok:
+        if data is None or not ok:
             return
         info = GaugeMetricFamily("flexit_info", "Unit identity", labels=INFO)
-        info.add_metric([str(data[k]) for k in INFO], 1)
+        # A missing identity field becomes an empty label rather than failing the whole scrape.
+        info.add_metric([str(data.get(k, "")) for k in INFO], 1)
         yield info
         for name, value in data.items():
             # bools become 0/1; strings (identity, unreadable points) and None are skipped
