@@ -98,6 +98,8 @@ def test_dashboard_metrics_exist():
     with open(f"{CHART}/dashboards/flexit.json") as f:
         dash = json.load(f)
     assert dash["uid"] == "flexit" and dash["editable"] is False
+    # the Grafana folder already says Home; a "Home / " title prefix only repeats it
+    assert not dash["title"].startswith("Home /"), dash["title"]
     panels = [p for p in dash["panels"] if p["type"] != "row"]
     assert len(panels) >= 15
     for p in panels:

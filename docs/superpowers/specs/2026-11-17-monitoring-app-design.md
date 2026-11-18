@@ -121,7 +121,7 @@ for the eve images).
   - `FlexitFilterChange` — `flexit_air_filter_polluted == 1` for 1h; summary says to reset the timer on the unit.
   - `FlexitSupplyAirCold` — `flexit_supply_air_temperature < 15` for 30m (it stayed above 19 °C through November
     2026 nights; below 15 °C the heater or heat recovery has failed).
-- Dashboard ConfigMap from `dashboards/flexit.json` (`.Files.Get`), uid `flexit`, title `Home / Flexit ventilation`,
+- Dashboard ConfigMap from `dashboards/flexit.json` (`.Files.Get`), uid `flexit`, title `Flexit ventilation` (no "Home / " prefix: the Grafana folder says it; owner, 2026-11-18),
   datasource uid `prometheus`, not editable. Panels:
   - Now: mode (value-mapped), reachable, filter OK/CHANGE, filter hours / exchange interval, outside / supply /
     extract / exhaust temperatures, extract humidity, heat recovery %.
