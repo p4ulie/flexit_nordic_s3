@@ -64,7 +64,7 @@ def test_all_toggles():
     rules = {r["alert"]: r for g in docs["PrometheusRule"]["spec"]["groups"] for r in g["rules"]}
     assert {n: (r["expr"], r["for"]) for n, r in rules.items()} == {
         "FlexitUnreachable": ("flexit_up == 0", "15m"),
-        "FlexitStale": ("time() - flexit_last_success_timestamp_seconds > 600", "5m"),
+        "FlexitStale": ("time() - flexit_last_success_timestamp_seconds > 600 and flexit_up == 1", "5m"),
         "FlexitFilterChange": ("flexit_air_filter_polluted == 1", "1h"),
         "FlexitSupplyAirCold": ("flexit_supply_air_temperature < 15", "30m"),
     }

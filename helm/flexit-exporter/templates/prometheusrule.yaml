@@ -17,7 +17,7 @@ spec:
           annotations:
             summary: The Flexit unit has not answered BACnet reads for 15 minutes.
         - alert: FlexitStale
-          expr: time() - flexit_last_success_timestamp_seconds > 600
+          expr: time() - flexit_last_success_timestamp_seconds > 600 and flexit_up == 1
           for: 5m
           labels:
             severity: warning

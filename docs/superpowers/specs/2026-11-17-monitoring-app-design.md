@@ -117,7 +117,7 @@ for the eve images).
   every namespace without labels).
 - PrometheusRule, group `flexit`, all `severity: warning`:
   - `FlexitUnreachable` — `flexit_up == 0` for 15m.
-  - `FlexitStale` — `time() - flexit_last_success_timestamp_seconds > 600` for 5m (the loop itself stalled).
+  - `FlexitStale` — `time() - flexit_last_success_timestamp_seconds > 600 and flexit_up == 1` for 5m (the loop itself stalled; a down unit is Unreachable).
   - `FlexitFilterChange` — `flexit_air_filter_polluted == 1` for 1h; summary says to reset the timer on the unit.
   - `FlexitSupplyAirCold` — `flexit_supply_air_temperature < 15` for 30m (it stayed above 19 °C through November
     2026 nights; below 15 °C the heater or heat recovery has failed).
